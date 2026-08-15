@@ -1,1 +1,65 @@
-
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Барови заявки </title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f6f8;color:#17202a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+.wrap{max-width:1150px;margin:auto;padding:22px}.top{margin-bottom:18px}h1{margin:0 0 5px}.muted{color:#667085}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.card{background:#fff;border:1px solid #dfe3e8;border-radius:16px;padding:18px}
+label{display:block;font-weight:700;margin-bottom:8px}textarea{width:100%;height:440px;resize:vertical;border:1px solid #ccd2da;border-radius:12px;padding:13px;font:14px/1.5 monospace}
+.output{height:440px;overflow:auto;white-space:pre-wrap;border:1px solid #ccd2da;border-radius:12px;padding:13px;background:#fafafa;font:14px/1.55 monospace}
+.buttons{display:flex;gap:9px;margin-top:11px;flex-wrap:wrap}button{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}
+.primary{background:#1769e0;color:#fff}.secondary{background:#e9edf2}.copy{background:#15803d;color:#fff}
+.status{margin-top:10px;font-size:13px;color:#667085}.settings{margin-top:18px}.settings input{width:100%;padding:11px;border:1px solid #ccd2da;border-radius:10px}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.wrap{padding:12px}}
+</style></head>
+<body>
+<div class="wrap">
+<div class="top"><h1>📝 Algara — Барови заявки</h1><div class="muted">Изкуственият интелект форматира заявката според вградения prompt.</div></div>
+<div class="grid">
+<section class="card">
+<label for="input">Неформатирана заявка</label>
+<textarea id="input" placeholder="Заявка Бийч бар
+Текила Мачос 2
+Розов Джин Кенсингтън 1
+Лимони
+Сироп мента 1
+Кег бира"></textarea>
+<div class="buttons"><button class="primary" id="format">Форматирай заявката</button><button class="secondary" id="clear">Изчисти</button></div>
+<div class="status" id="status">Готов.</div>
+</section>
+<section class="card">
+<label>Готова заявка</label>
+<div id="output" class="output">Тук ще се появи готовата заявка.</div>
+<div class="buttons"><button class="copy" id="copy">Копирай</button></div>
+</section>
+</div>
+<section class="card settings">
+<label for="key">OpenAI API key</label>
+<input id="key" type="password" placeholder="sk-..." autocomplete="off">
+<div class="status">Ключът се изпраща само към локалния ти сървър и не се записва в сайта.</div>
+</section>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+$("format").onclick=async()=>{
+ const text=$("input").value.trim(), key=$("key").value.trim();
+ if(!text)return $("status").textContent="Постави заявка.";
+ if(!key)return $("status").textContent="Въведи OpenAI API key.";
+ $("status").textContent="Форматиране…"; $("format").disabled=true;
+ try{
+  const r=await fetch("/api/format",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},body:JSON.stringify({order:text})});
+  const d=await r.json(); if(!r.ok)throw new Error(d.error||"Грешка");
+  $("output").textContent=d.text; $("status").textContent="Готово ✓";
+ }catch(e){$("status").textContent="Грешка: "+e.message}
+ finally{$("format").disabled=false}
+};
+$("clear").onclick=()=>{$("input").value="";$("output").textContent="Тук ще се появи готовата заявка.";$("status").textContent="Готов."};
+$("copy").onclick=async()=>{
+ const t=$("output").textContent;if(!t||t.startsWith("Тук ще"))return;
+ try{await navigator.clipboard.writeText(t);$("copy").textContent="Копирано ✓";setTimeout(()=>$("copy").textContent="Копирай",1200)}
+ catch(e){$("status").textContent="Копирането е блокирано от браузъра."}
+};
+</script>
+</body></html>
